@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -11,6 +12,7 @@ using WebShopDemo.Models.Order;
 
 namespace WebShopDemo.Controllers
 {
+    [Authorize(Roles = "Administrator")]
     public class OrderController : Controller
     {
         public readonly ApplicationDbContext context;
@@ -42,6 +44,7 @@ namespace WebShopDemo.Controllers
             }).ToList();
             return View(orders);
         }
+        [AllowAnonymous]
         public IActionResult MyOrders(string searchString)
         {
             string currentUserId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -71,7 +74,7 @@ namespace WebShopDemo.Controllers
             }
             return this.View(orders);
         }
-
+        [AllowAnonymous]
         public ActionResult Create(int productId,int quantity)
         {
             string userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -96,6 +99,7 @@ namespace WebShopDemo.Controllers
             };
             return View(orderFromDb);
         }
+        [AllowAnonymous]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Create(OrderConfirmVM bindingModel)
@@ -105,7 +109,7 @@ namespace WebShopDemo.Controllers
                 string userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
                 var user = this.context.Users.SingleOrDefault(u => u.Id == userId);
                 var product = this.context.Products.SingleOrDefault(x => x.Id == bindingModel.ProductId);
-                if (user == null || product == null || product.Quantity < quantity)
+                if (user == null || product == null || product.Quantity < bindingModel.Quantity|| bindingModel.Quantity==0)
                 {
                     return this.RedirectToAction("Index", "Product");
                 }
